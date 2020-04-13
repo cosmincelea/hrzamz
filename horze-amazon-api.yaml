@@ -1,0 +1,538 @@
+openapi: "3.0.0"
+info:
+  title: Horze Amazon Pay REST API
+  version: v1.0
+  description: 'A Restful API that works as a gateaway for Amazon PAY'
+
+paths:
+  /session/new:
+   post:
+      description: Creates a new customer session
+      parameters:
+        - in: path
+          name: checkoutReviewReturnUrl
+          schema:
+            type: string
+          required: true
+          description: checkoutReviewReturnUrl required by Amazon in base64 encoding
+        - in: path
+          name: checkoutResultReturnUrl
+          schema:
+            type: string
+          required: true
+          description: checkoutResultReturnUrl required by Amazon in base64 encoding
+      responses:
+        '200':
+          description: Successfully created a new session
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/SessionResponse'
+        '400':
+          description: There was an error processing the request
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/Error'
+  
+  /customer:
+    get:
+        description: Gets customers data
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: amazonCheckoutSessionId
+          schema:
+            type: string
+          required: true
+          description: Session Id that is returned from Amazon
+        responses:
+          '200':
+            description: Customer data
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/CustomerData'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+                 
+  /order/authorize:
+    post:
+        description: Creates and authorizes an order
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDetails'
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: amazonCheckoutSessionId
+          schema:
+            type: string
+          required: true
+          description: Session Id that is returned from Amazon
+        responses:
+          '200':
+            description: Customer data. We need to redirect the customer to amazonPayRedirectUrl before being able to capture the order
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/CustomerData'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+                 
+  /order/capture:
+    post:
+        description: Captures an order
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptureAmount'
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: chargeId
+          schema:
+            type: string
+          required: true
+          description: chargeId that is returned from Amazon when getting customer after authorize call
+        responses:
+          '200':
+            description: Capture Response
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/CaptureResponse'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+    get:
+        description: Gets the capture info
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: chargeId
+          schema:
+            type: string
+          required: true
+          description: chargeId that is returned from Amazon
+        responses:
+          '200':
+            description: Refund Response
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/CaptureResponse'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+                 
+                 
+  /order/refund:
+    post:
+        description: Refunds an order
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefundRequest'
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: amazonCheckoutSessionId
+          schema:
+            type: string
+          required: true
+          description: Session Id that is returned from Amazon
+        responses:
+          '200':
+            description: Capture Response
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/RefundResponse'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+                 
+    get:
+        description: Gets the refund info
+        parameters:
+        - in: header
+          name: ApiKey
+          schema:
+            type: string
+          required: true
+        - in: path
+          name: refundId
+          schema:
+            type: string
+          required: true
+          description: refundId that is returned from Amazon after refund post call
+        responses:
+          '200':
+            description: Refund Response
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/RefundResponse'
+          '400':
+            description: There was an error processing the request
+            content:
+              application/json:
+                schema:
+                 $ref: '#/components/schemas/Error'
+                
+              
+components:
+  schemas:
+  
+    CaptureResponse:
+      type: object
+      properties:
+        chargeId:
+          type: string
+        chargeAmount:
+          $ref: '#/components/schemas/ChargeAmount'
+        chargePermissionId:
+          type: string
+        captureAmount:
+          $ref: '#/components/schemas/CaptureAmount'
+        refundedAmount:
+          $ref: '#/components/schemas/RefundedAmount'
+        softDescriptor:
+          type: string
+        statusDetail:
+          $ref: '#/components/schemas/StatusDetail'
+        convertedAmount:
+          type: string
+        conversionRate:
+          type: string
+        creationTimestamp:
+          type: string
+        expirationTimestamp:
+          type: string
+        releaseEnvironment:
+          type: string
+  
+    RefundResponse:
+      type: object
+      properties:
+        chargeId:
+          type: string
+        refundId:
+          type: string
+        refundedAmount:
+          $ref: '#/components/schemas/RefundedAmount'
+        softDescriptor:
+          type: string
+        statusDetail:
+          $ref: '#/components/schemas/StatusDetail'
+        releaseEnvironment:
+          type: string
+  
+  
+    CustomerData:
+      type: object
+      properties:
+        checkoutSessionId:
+          type: string
+        webCheckoutDetail:
+          $ref: '#/components/schemas/webCheckoutDetail'
+        productType:
+          type: string
+        paymentDetail:
+          $ref: '#/components/schemas/PaymentDetails'
+        merchantMetadata:
+          $ref: '#/components/schemas/MerchantMetadata'
+        buyer:
+          $ref: '#/components/schemas/Buyer'
+        supplementaryData:
+          type: string
+        paymentPreferences:
+          $ref: '#/components/schemas/PaymentPreferences'
+        statusDetail:
+          $ref: '#/components/schemas/StatusDetail'
+        shippingAddress:
+          $ref: '#/components/schemas/ShippingAddress'
+        platformId:
+          type: string
+        chargePermissionId:
+          type: string
+        chargeId:
+          type: string
+        creationTimestamp:
+          type: string
+        expirationTimestamp:
+          type: string
+        storeId:
+          type: string
+        releaseEnvironment:
+          type: string
+        deliverySpecifications:
+          type: string
+    
+    PaymentPreferences:
+      type: array
+      items:
+        type: object
+        properties:
+          billingAddress:
+            $ref: '#/components/schemas/BillingAddress'
+          paymentDescriptor:
+            type: string
+            
+    ShippingAddress:
+      type: object
+      properties:
+        name:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        addressLine3:
+          type: string
+        city:
+          type: string
+        county:
+          type: string 
+        district:
+          type: string
+        stateOrRegion:
+          type: string
+        postalCode:
+          type: string 
+        countryCode:
+          type: string
+        phoneNumber:
+          type: string 
+          
+    BillingAddress:
+      type: object
+      properties:
+        name:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        addressLine3:
+          type: string
+        city:
+          type: string
+        county:
+          type: string 
+        district:
+          type: string
+        stateOrRegion:
+          type: string
+        postalCode:
+          type: string 
+        countryCode:
+          type: string
+        phoneNumber:
+          type: string 
+          
+    Buyer:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        buyerId:
+          type: string
+
+    SessionResponse:
+      type: object
+      properties:
+        checkoutSessionId:
+          type: string
+        webCheckoutDetail:
+          $ref: '#/components/schemas/webCheckoutDetail'
+        paymentDetail:
+          $ref: '#/components/schemas/PaymentDetails'
+        merchantMetadata:
+          $ref: '#/components/schemas/MerchantMetadata'
+        supplementaryData:
+          type: string
+        buyer:
+          type: object
+        statusDetail:
+          $ref: '#/components/schemas/StatusDetail'
+        shippingAddress:
+          type: string
+        platformId:
+          type: string
+        chargePermissionId:
+          type: string
+        chargeId:
+          type: string
+        creationTimestamp:
+          type: string
+        expirationTimestamp:
+          type: string
+        storeId:
+          type: string
+        releaseEnvironment:
+          type: string
+        deliverySpecifications:
+          type: string
+          
+    StatusDetail:
+      type: object
+      properties:
+        state:
+          type: string
+        reasonCode:
+          type: string
+        reasonDescription:
+          type: string
+        lastUpdatedTimestamp:
+          type: string
+    
+    MerchantMetadata:
+      type: object
+      properties:
+        merchantReferenceId:
+          description: Demandware generated order ID
+          type: string
+        merchantStoreName:
+          type: string
+        noteToBuyer:
+          type: string
+        customInformation:
+          type: string
+       
+    PaymentDetails:
+      type: object
+      properties:
+        paymentIntent:
+          type: string
+        canHandlePendingAuthorization:
+          type: boolean
+        chargeAmount:
+          $ref: '#/components/schemas/ChargeAmount'
+        softDescriptor:
+          type: string
+        presentmentCurrency:
+          type: string
+ 
+    CaptureAmount:
+      type: object
+      properties:
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        softDescriptor:
+          type: string
+    
+     
+    RefundRequest:
+      type: object
+      properties:
+        refundAmount:
+         $ref: '#/components/schemas/RefundedAmount'
+        chargeId:
+          type: string
+
+    RefundedAmount:
+      type: object
+      properties:
+        amount:
+         type: number
+        currencyCode:
+          type: string
+        softDescriptor:
+         type: string
+ 
+    ChargeAmount:
+      type: object
+      properties:
+        amount:
+          type: number
+        currencyCode:
+          type: string
+ 
+    SessionPayload:
+      type: object
+      required:
+        - webCheckoutDetail
+        - storeId
+      properties:
+        webCheckoutDetail:
+          $ref: '#/components/schemas/webCheckoutDetail'
+        storeId:
+          type: string
+          
+    webCheckoutDetail:
+      type: object
+      required:
+        - checkoutReviewReturnUrl
+        - checkoutResultReturnUrl
+      properties:
+        checkoutReviewReturnUrl:
+          type: string
+        checkoutResultReturnUrl:
+          type: string
+        amazonPayRedirectUrl:
+           type: string
+           description: The URL generated by Amazon where we need to redirect the customer after the authorize method has been called (The url is returned in the response of the order/authorize method)
+
+
+    Error:
+      description: There was an error processing the order reference
+      type: object
+      required:
+        - reasonCode
+        - message
+      properties:
+        reasonCode:
+          type: string
+          format: int32
+        message:
+          type: string

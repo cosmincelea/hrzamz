@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+<div id="AmazonPayButton"></div>
+<script src="https://static-eu.payments-amazon.com/checkout.js"></script>
+<script type="text/javascript" charset="utf-8">
+
+    const encodedReviewUrl = window.btoa("http://localhost:8877/review.html");
+    const encodedResultUrl = window.btoa("http://localhost:8877/return.html");
+
+    amazon.Pay.renderButton('#AmazonPayButton', {
+        merchantId: 'AJPZCJZCGLOQ4',
+        createCheckoutSession: {
+            //maybe send in params for the config like locale and so on
+            url: 'http://localhost:8877/session/new?checkoutReviewReturnUrl=' + encodedReviewUrl + '&checkoutResultReturnUrl=' + encodedResultUrl
+        },
+        sandbox: true, // dev environment
+        ledgerCurrency: 'EUR', // Amazon Pay account ledger currency checkoutLanguage: 'en_GB', // render language
+        productType: 'PayAndShip', // checkout type
+        placement: 'Cart' });
+</script>
+</body>
+
+</html>

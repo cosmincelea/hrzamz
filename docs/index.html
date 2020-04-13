@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/redoc/bundles/redoc.standalone.js"> </script>
+    <title>Horze Api Docs</title>
+</head>
+<body>
+<div id="redoc-container"></div>
+</body>
+<script>
+    Redoc.init('https://horzeapi.azurewebsites.net/horze-amazon-api.yaml', {
+        scrollYOffset: 50
+    }, document.getElementById('redoc-container'))
+</script>
+</html>
